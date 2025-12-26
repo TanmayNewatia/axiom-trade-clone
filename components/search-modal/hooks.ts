@@ -92,11 +92,11 @@ export const useSearchModal = ({
 
   // Reset search when modal closes
   useEffect(() => {
-    if (!open) {
+    return () => {
       setSearchQuery("");
       setSearchResults([]);
-    }
-  }, [open]);
+    };
+  }, []);
 
   const formatPrice = (priceUSD: string) => {
     const price = parseFloat(priceUSD.replace("$", ""));
