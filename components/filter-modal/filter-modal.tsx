@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import type { FilterOptions } from "@/components/pulse-section";
+import { FilterOptions } from "../pulse-section/hooks";
 
 interface FilterModalProps {
   open: boolean;
@@ -20,6 +20,8 @@ interface FilterModalProps {
   onReset: () => void;
 }
 
+const SECTIONS = ["New Pairs", "Final Stretch", "Migrated"] as const;
+
 export function FilterModal({
   open,
   onOpenChange,
@@ -27,11 +29,25 @@ export function FilterModal({
   onFilterChange,
   onReset,
 }: FilterModalProps) {
-  const sections: ("New Pairs" | "Final Stretch" | "Migrated")[] = [
-    "New Pairs",
-    "Final Stretch",
-    "Migrated",
-  ];
+  const handleSectionToggle = (section: string, checked: boolean) => {
+    if (checked) {
+      onFilterChange({
+        ...filters,
+        sections: [...filters.sections, section] as (typeof SECTIONS)[number][],
+      });
+    } else {
+      onFilterChange({
+        ...filters,
+        sections: filters.sections.filter((s: string) => s !== section),
+      });
+    }
+  };
+
+  const formatInfiniteValue = (value: number, isPositive = true) => {
+    if (isPositive && value === Number.POSITIVE_INFINITY) return "∞";
+    if (!isPositive && value === Number.NEGATIVE_INFINITY) return "-∞";
+    return value.toFixed(0);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,31 +60,19 @@ export function FilterModal({
           {/* Sections Filter */}
           <div>
             <Label className="text-sm font-semibold mb-3 block">Sections</Label>
-            <div className="space-y-2">
-              {sections.map((section) => (
+            <div className="space-y-3">
+              {SECTIONS.map((section) => (
                 <label
                   key={section}
-                  className="flex items-center gap-3 cursor-pointer"
+                  className="flex items-center gap-3 cursor-pointer hover:bg-secondary/50 p-2 rounded-md transition-colors"
                 >
                   <Checkbox
                     checked={filters.sections.includes(section)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        onFilterChange({
-                          ...filters,
-                          sections: [...filters.sections, section],
-                        });
-                      } else {
-                        onFilterChange({
-                          ...filters,
-                          sections: filters.sections.filter(
-                            (s) => s !== section
-                          ),
-                        });
-                      }
-                    }}
+                    onCheckedChange={(checked) =>
+                      handleSectionToggle(section, !!checked)
+                    }
                   />
-                  <span className="text-sm">{section}</span>
+                  <span className="text-sm font-medium">{section}</span>
                 </label>
               ))}
             </div>
@@ -78,9 +82,7 @@ export function FilterModal({
           <div>
             <Label className="text-sm font-semibold mb-3 block">
               Holders: {filters.minHolders} -{" "}
-              {filters.maxHolders === Number.POSITIVE_INFINITY
-                ? "∞"
-                : filters.maxHolders}
+              {formatInfiniteValue(filters.maxHolders)}
             </Label>
             <Slider
               value={[filters.minHolders]}
@@ -97,7 +99,7 @@ export function FilterModal({
           {/* Price Range */}
           <div>
             <Label className="text-sm font-semibold mb-3 block">
-              Min Price: ${filters.minPrice.toFixed(0)}
+              Min Price: ${filters.minPrice.toLocaleString()}
             </Label>
             <Slider
               value={[filters.minPrice]}
@@ -114,15 +116,8 @@ export function FilterModal({
           {/* Change Range */}
           <div>
             <Label className="text-sm font-semibold mb-3 block">
-              24h Change:{" "}
-              {filters.minChange === Number.NEGATIVE_INFINITY
-                ? "-∞"
-                : filters.minChange.toFixed(0)}
-              % -{" "}
-              {filters.maxChange === Number.POSITIVE_INFINITY
-                ? "∞"
-                : filters.maxChange.toFixed(0)}
-              %
+              24h Change: {formatInfiniteValue(filters.minChange, false)}% -{" "}
+              {formatInfiniteValue(filters.maxChange)}%
             </Label>
             <Slider
               value={[Math.max(filters.minChange, -100)]}
@@ -138,15 +133,11 @@ export function FilterModal({
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t border-border">
-            <Button
-              variant="outline"
-              onClick={onReset}
-              className="flex-1 bg-transparent"
-            >
+            <Button variant="outline" onClick={onReset} className="flex-1">
               Reset
             </Button>
             <Button onClick={() => onOpenChange(false)} className="flex-1">
-              Apply
+              Apply Filters
             </Button>
           </div>
         </div>

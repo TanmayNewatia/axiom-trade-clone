@@ -1,79 +1,38 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import {
-  Search,
-  Settings,
-  Volume2,
-  BarChart3,
-  Eye,
-  Filter,
-} from "lucide-react";
-import { TokenGrid } from "./token-grid";
-import { SortDropdown } from "./sort-dropdown";
-import { FilterModal } from "./filter-modal";
-import { TokenGridSkeleton } from "./token-card-skeleton";
-import { ErrorBoundary } from "./error-boundary";
+import { Volume2, BarChart3, Eye, Filter } from "lucide-react";
+import { TokenGrid } from "../token-grid/token-grid";
+import { SortDropdown } from "../sort-dropdown/sort-dropdown";
+import { FilterModal } from "../filter-modal/filter-modal";
+import { SearchModal } from "../search-modal/search-modal";
+import { TokenGridSkeleton } from "../token-card-skeleton";
+import { ErrorBoundary } from "../error-boundary";
+import { Button } from "../common/button";
+import { usePulseSection } from "./hooks";
 
-type SortOption = "trending" | "newest" | "volume" | "holders" | "price";
-
-export interface FilterOptions {
-  minHolders: number;
-  maxHolders: number;
-  minChange: number;
-  maxChange: number;
-  minPrice: number;
-  maxPrice: number;
-  sections: ("New Pairs" | "Final Stretch" | "Migrated")[];
-  searchQuery: string;
-}
-
-const defaultFilters: FilterOptions = {
-  minHolders: 0,
-  maxHolders: Number.POSITIVE_INFINITY,
-  minChange: Number.NEGATIVE_INFINITY,
-  maxChange: Number.POSITIVE_INFINITY,
-  minPrice: 0,
-  maxPrice: Number.POSITIVE_INFINITY,
-  sections: ["New Pairs", "Final Stretch", "Migrated"],
-  searchQuery: "",
-};
+const Icons = [
+  { icon: BarChart3, title: "Chart" },
+  { icon: Volume2, title: "Volume" },
+  { icon: Eye, title: "Eye" },
+  { icon: Volume2, title: "Alerts" },
+];
 
 export function PulseSection() {
-  const [sortBy, setSortBy] = useState<SortOption>("trending");
-  const [filters, setFilters] = useState<FilterOptions>(defaultFilters);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<
-    "New Pairs" | "Final Stretch" | "Migrated"
-  >("New Pairs");
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleSort = useCallback((option: SortOption) => {
-    setSortBy(option);
-  }, []);
-
-  const handleFilterChange = useCallback((newFilters: FilterOptions) => {
-    setFilters(newFilters);
-  }, []);
-
-  const resetFilters = useCallback(() => {
-    setFilters(defaultFilters);
-  }, []);
-
-  const hasActiveFilters =
-    filters.searchQuery ||
-    filters.minHolders > 0 ||
-    filters.maxHolders < Number.POSITIVE_INFINITY ||
-    filters.minChange > Number.NEGATIVE_INFINITY ||
-    filters.maxChange < Number.POSITIVE_INFINITY ||
-    filters.minPrice > 0 ||
-    filters.maxPrice < Number.POSITIVE_INFINITY ||
-    filters.sections.length < 3;
+  const {
+    sortBy,
+    filters,
+    showFilterModal,
+    showSearchModal,
+    isLoading,
+    activeTab,
+    handleSort,
+    handleFilterChange,
+    resetFilters,
+    hasActiveFilters,
+    setShowFilterModal,
+    setShowSearchModal,
+    setActiveTab,
+  } = usePulseSection();
 
   return (
     <ErrorBoundary>
@@ -83,36 +42,10 @@ export function PulseSection() {
             {/* Left section */}
             <div className="flex items-center gap-2">
               <h1 className="text-lg sm:text-xl font-semibold">Pulse</h1>
-              <button
-                className="p-1.5 hover:bg-secondary rounded transition-colors"
-                title="List view"
-              >
-                <Settings size={16} className="text-muted-foreground" />
-              </button>
             </div>
 
             {/* Right section - Controls */}
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2">
-              {/* Search */}
-              <div className="flex-1 sm:flex-none relative min-w-[140px]">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={filters.searchQuery}
-                  onChange={(e) =>
-                    handleFilterChange({
-                      ...filters,
-                      searchQuery: e.target.value,
-                    })
-                  }
-                  className="w-full px-2.5 py-1.5 bg-secondary border border-border rounded text-xs placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <Search
-                  size={12}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                />
-              </div>
-
               {/* Filter button */}
               <button
                 onClick={() => setShowFilterModal(true)}
@@ -129,26 +62,11 @@ export function PulseSection() {
               {/* Sort dropdown */}
               <SortDropdown value={sortBy} onChange={handleSort} />
 
-              <button
-                className="p-1.5 hover:bg-secondary rounded transition-colors flex-shrink-0"
-                title="Chart"
-              >
-                <BarChart3 size={16} className="text-muted-foreground" />
-              </button>
-
-              <button
-                className="p-1.5 hover:bg-secondary rounded transition-colors flex-shrink-0"
-                title="Volume"
-              >
-                <Volume2 size={16} className="text-muted-foreground" />
-              </button>
-
-              <button
-                className="p-1.5 hover:bg-secondary rounded transition-colors flex-shrink-0"
-                title="Eye"
-              >
-                <Eye size={16} className="text-muted-foreground" />
-              </button>
+              {Icons.map(({ icon: Icon, title }) => (
+                <Button key={title} title={title}>
+                  <Icon size={16} className="text-muted-foreground" />
+                </Button>
+              ))}
             </div>
           </div>
         </div>
@@ -234,6 +152,18 @@ export function PulseSection() {
           filters={filters}
           onFilterChange={handleFilterChange}
           onReset={resetFilters}
+        />
+
+        {/* Search Modal */}
+        <SearchModal
+          open={showSearchModal}
+          onOpenChange={setShowSearchModal}
+          onTokenSelect={(token) => {
+            handleFilterChange({
+              ...filters,
+              searchQuery: token.symbol,
+            });
+          }}
         />
       </div>
     </ErrorBoundary>

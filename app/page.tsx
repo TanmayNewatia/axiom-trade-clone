@@ -1,9 +1,9 @@
 "use client";
 
 import { Suspense } from "react";
-import { Header } from "@/components/header";
+import { Header } from "@/components/header/header";
 import { BottomBar } from "@/components/bottom-bar";
-import { PulseSection } from "@/components/pulse-section";
+import { PulseSection } from "@/components/pulse-section/pulse-section";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 function PageContent() {
