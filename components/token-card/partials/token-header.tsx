@@ -2,11 +2,19 @@ import { memo } from "react";
 import { Info } from "lucide-react";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { TokenInfo } from "./token-info";
+import { AnimatedValue } from "@/components/price-update-display";
 import type { Token } from "@/lib/token-data";
 
 interface TokenHeaderProps {
   token: Token;
   isUpdating: boolean;
+  previousValues?: {
+    price?: string;
+    priceUSD?: string;
+    change24h?: string;
+    volume24h?: string;
+    holders?: string;
+  };
 }
 
 export const TokenHeader = memo(function TokenHeader({
@@ -22,7 +30,11 @@ export const TokenHeader = memo(function TokenHeader({
               isUpdating ? "text-primary" : "group-hover:text-primary"
             }`}
           >
-            {token.name}
+            <AnimatedValue
+              value={token.name}
+              animationType="glow"
+              className={isUpdating ? "text-primary" : ""}
+            />
           </h3>
           <Popover>
             <PopoverTrigger asChild>

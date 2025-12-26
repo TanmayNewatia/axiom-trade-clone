@@ -1,5 +1,9 @@
 import { memo } from "react";
 import { TooltipWrapper } from "../../common/tooltip-wrapper";
+import {
+  AnimatedValue,
+  ChangeIndicator,
+} from "@/components/price-update-display";
 import type { Token } from "@/lib/token-data";
 
 interface TokenStatsProps {
@@ -7,20 +11,31 @@ interface TokenStatsProps {
   displayChange: number;
   isPositiveChange: boolean;
   isUpdating: boolean;
+  previousValues?: {
+    price?: string;
+    priceUSD?: string;
+    change24h?: string;
+    volume24h?: string;
+    holders?: string;
+  };
 }
 
 export const TokenStats = memo(function TokenStats({
   token,
   displayChange,
-  isPositiveChange,
   isUpdating,
+  previousValues,
 }: TokenStatsProps) {
   return (
     <div className="flex items-center justify-between text-xs gap-1.5 mt-1">
       <div className="flex items-center gap-1.5">
         <TooltipWrapper content={`${token.holders} holders`}>
           <span className="text-muted-foreground hover:text-foreground transition-colors cursor-help">
-            {token.holders}
+            <AnimatedValue
+              value={token.holders}
+              previousValue={previousValues?.holders}
+              animationType="scale"
+            />
           </span>
         </TooltipWrapper>
 
@@ -28,21 +43,25 @@ export const TokenStats = memo(function TokenStats({
 
         <TooltipWrapper content="24h volume">
           <span className="text-muted-foreground hover:text-foreground transition-colors cursor-help">
-            {token.volume24h}
+            <AnimatedValue
+              value={token.volume24h}
+              previousValue={previousValues?.volume24h}
+              animationType="scale"
+            />
           </span>
         </TooltipWrapper>
       </div>
 
       <TooltipWrapper content={`24h change: ${displayChange.toFixed(1)}%`}>
-        <span
-          className={`font-semibold cursor-help transition-all duration-200 ${
-            isPositiveChange
-              ? "text-green-500 hover:text-green-400"
-              : "text-red-500 hover:text-red-400"
-          } ${isUpdating ? "animate-pulse" : ""}`}
-        >
-          {displayChange.toFixed(1)}%
-        </span>
+        <ChangeIndicator
+          change={displayChange}
+          previousChange={
+            previousValues?.change24h
+              ? parseFloat(previousValues.change24h.replace(/[^-0-9.]/g, ""))
+              : undefined
+          }
+          className={`cursor-help ${isUpdating ? "animate-pulse" : ""}`}
+        />
       </TooltipWrapper>
     </div>
   );

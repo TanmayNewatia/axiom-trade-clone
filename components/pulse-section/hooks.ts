@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useLiveTokens } from "@/hooks/use-live-tokens";
 
 type SortOption = "trending" | "newest" | "volume" | "holders" | "price";
 
@@ -11,6 +12,13 @@ export interface FilterOptions {
   maxPrice: number;
   sections: ("New Pairs" | "Final Stretch" | "Migrated")[];
   searchQuery: string;
+}
+
+interface LiveStats {
+  isConnected: boolean;
+  lastUpdate?: number;
+  activeTokens: number;
+  totalUpdates: number;
 }
 
 const defaultFilters: FilterOptions = {
@@ -33,6 +41,24 @@ export const usePulseSection = () => {
   const [activeTab, setActiveTab] = useState<
     "New Pairs" | "Final Stretch" | "Migrated"
   >("New Pairs");
+  const [updateCount, setUpdateCount] = useState(0);
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>();
+
+  const liveTokens = useLiveTokens();
+
+  // Track live data statistics
+  const liveStats: LiveStats = {
+    isConnected: true, // Assuming always connected for mock
+    lastUpdate: lastUpdateTime,
+    activeTokens: liveTokens.length,
+    totalUpdates: updateCount,
+  };
+
+  // Track when tokens update
+  useEffect(() => {
+    setUpdateCount((prev) => prev + 1);
+    setLastUpdateTime(Date.now());
+  }, [liveTokens]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
@@ -81,6 +107,7 @@ export const usePulseSection = () => {
     showSearchModal,
     isLoading,
     activeTab,
+    liveStats,
     handleSort,
     handleFilterChange,
     resetFilters,

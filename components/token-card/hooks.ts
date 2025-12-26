@@ -1,15 +1,33 @@
-import { useState, useCallback } from "react";
-import { usePriceUpdate, useTokenUpdate } from "@/hooks/use-price-updates";
+import { useState, useCallback, useMemo } from "react";
+import { useSingleTokenUpdates } from "@/hooks/use-price-updates";
 import type { Token } from "@/lib/token-data";
 
 export function useTokenCard(token: Token) {
   const [showModal, setShowModal] = useState(false);
-  const priceUpdate = usePriceUpdate(token.name);
-  const tokenUpdate = useTokenUpdate(token.name);
+  const tokenUpdate = useSingleTokenUpdates(token.name);
 
-  const displayChange = priceUpdate?.change ?? token.change24hValue;
+  // Merge live updates with static token data
+  const liveToken = useMemo(() => {
+    if (!tokenUpdate) return token;
+
+    return {
+      ...token,
+      price: tokenUpdate.price,
+      priceUSD: tokenUpdate.priceUSD,
+      change24h: tokenUpdate.change24h,
+      change24hValue: tokenUpdate.change24hValue,
+      volume24h: tokenUpdate.volume24h,
+      volume24hValue: tokenUpdate.volume24hValue,
+      holders: tokenUpdate.holders,
+      holdersValue: tokenUpdate.holdersValue,
+    };
+  }, [token, tokenUpdate]);
+
+  const displayChange = liveToken.change24hValue;
   const isPositiveChange = displayChange >= 0;
-  const isUpdating = !!(priceUpdate || tokenUpdate);
+  const isUpdating = !!tokenUpdate;
+  const hasRecentUpdate =
+    tokenUpdate && Date.now() - tokenUpdate.timestamp < 2000;
 
   const handleDetailsClick = useCallback(() => {
     setShowModal(true);
@@ -21,9 +39,12 @@ export function useTokenCard(token: Token) {
 
   return {
     showModal,
+    liveToken,
     displayChange,
     isPositiveChange,
     isUpdating,
+    hasRecentUpdate,
+    tokenUpdate,
     handleDetailsClick,
     handleModalClose,
   };

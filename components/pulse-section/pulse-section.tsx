@@ -8,6 +8,7 @@ import { SearchModal } from "../search-modal/search-modal";
 import { TokenGridSkeleton } from "../token-card-skeleton";
 import { ErrorBoundary } from "../error-boundary";
 import { Button } from "../common/button";
+import { ConnectionStatusBadge } from "../live-data-indicator";
 import { usePulseSection } from "./hooks";
 
 const Icons = [
@@ -25,6 +26,7 @@ export function PulseSection() {
     showSearchModal,
     isLoading,
     activeTab,
+    liveStats,
     handleSort,
     handleFilterChange,
     resetFilters,
@@ -40,8 +42,12 @@ export function PulseSection() {
         <div className="border-b border-border px-3 sm:px-6 py-3 bg-background/95 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
             {/* Left section */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <h1 className="text-lg sm:text-xl font-semibold">Pulse</h1>
+              <ConnectionStatusBadge
+                isConnected={liveStats.isConnected}
+                className="hidden sm:flex"
+              />
             </div>
 
             {/* Right section - Controls */}
